@@ -12,7 +12,7 @@ DB_CONFIG = {
 }
 
 cols = [
-    "Recibo", "Fecha", "Total", "Descuento"
+    "Recibo", "Fecha", "Neto", "Descuento"
 ]
 
 def main(page: ft.Page):
@@ -38,9 +38,8 @@ def main(page: ft.Page):
 
     def actualizar_fecha(e, fecha: dict):
         fecha["value"] = e.control.value
-        fecha_str = fecha["value"].strftime('%d/%m/%Y')  # Puedes cambiar el formato si quieres
+        fecha_str = fecha["value"].strftime('%d/%m/%Y') 
 
-        # Actualizar los TextField visibles
         if fecha is fecha_desde_val:
             fecha_desde_txt.value = fecha_str
         elif fecha is fecha_hasta_val:
@@ -199,7 +198,9 @@ def main(page: ft.Page):
         ]),
         ft.Container(height=20),
         ft.Column([
-            tabla
+            ft.Row([
+                tabla
+            ], width=350, scroll=ft.ScrollMode.AUTO)
         ], height=300, scroll=ft.ScrollMode.AUTO)
     )
     cargar_datos_hoy()
