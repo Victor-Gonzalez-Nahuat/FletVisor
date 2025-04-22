@@ -196,7 +196,7 @@ def main(page: ft.Page):
 
 
     botones = ft.Row([
-        ft.ElevatedButton("Buscar", on_click=lambda e: buscar_producto(contribuyente_input.value.strip()), width=250, height=40, icon=ft.icons.SEARCH, bgcolor=ft.colors.LIME, color=ft.colors.WHITE, icon_color=ft.colors.WHITE),
+        ft.ElevatedButton("Buscar", on_click=lambda e: buscar_producto(contribuyente_input.value.strip()), width=250, height=40, icon=ft.icons.SEARCH, bgcolor=ft.colors.GREEN, color=ft.colors.WHITE, icon_color=ft.colors.WHITE),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
     page.add(
