@@ -21,8 +21,8 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
 
     filtro_txt = ft.TextField(label="Buscar por contribuyente", width=350)
-    fecha_desde_val = {"value": None}
-    fecha_hasta_val = {"value": None}
+    fecha_desde_val = {"value": datetime.today()}
+    fecha_hasta_val = {"value": datetime.today()}
 
     fecha_desde_txt = ft.TextField(label="Desde", width=150, read_only=True)
     fecha_hasta_txt = ft.TextField(label="Hasta", width=150, read_only=True)
@@ -93,7 +93,6 @@ def main(page: ft.Page):
 
 
     def cargar_datos_hoy(e=None):
-        filtro = filtro_txt.value.lower()
 
         hoy = datetime.today().strftime('%y%m%d')
 
@@ -180,6 +179,11 @@ def main(page: ft.Page):
         page.snack_bar = ft.SnackBar(ft.Text(f"Exportado a {archivo}"), open=True)
         page.update()
 
+    # Inicializar las fechas en los campos de texto
+    fecha_hoy = datetime.today().strftime('%d/%m/%Y')
+    fecha_desde_txt.value = fecha_hoy
+    fecha_hasta_txt.value = fecha_hoy
+
     page.add(
         ft.Row([
             filtro_txt,
@@ -204,5 +208,7 @@ def main(page: ft.Page):
         ], height=300, scroll=ft.ScrollMode.AUTO)
     )
     cargar_datos_hoy()
+
+    
 
 ft.app(target=main)
