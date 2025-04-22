@@ -6,7 +6,7 @@ API_URL = "api-telchac-production.up.railway.app/"
 
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.theme = ft.Theme(color_scheme_seed=ft.Colors.BLUE)
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.RED)
     page.title = "Recibos"
     page.padding = 10
 
@@ -72,6 +72,8 @@ def main(page: ft.Page):
         on_click=lambda e: page.open(date_picker_hasta)
     )
 
+    loader = ft.ProgressRing(visible=False)
+
     encabezado = ft.Container(
         content=ft.Column([
             ft.Row([logo, titulo_empresa]),
@@ -80,7 +82,7 @@ def main(page: ft.Page):
             ft.Row([txt_fecha_desde, txt_fecha_hasta])
         ]),
         padding=20,
-        bgcolor=ft.colors.BLUE,
+        bgcolor=ft.colors.RED,
         border_radius=ft.BorderRadius(top_left=0, top_right=0, bottom_left=20, bottom_right=20),
     )
 
@@ -127,6 +129,10 @@ def main(page: ft.Page):
         page.update()
 
     def buscar_producto(nombre):
+        # Mostrar el loader
+        loader.visible = True
+        page.update()
+
         desde = txt_fecha_desde.value
         hasta = txt_fecha_hasta.value
         desde_formateada = desde.replace("-", "")[2:]
@@ -160,6 +166,7 @@ def main(page: ft.Page):
 
         except Exception as e:
             print("Ocurrió un error al hacer la petición:", str(e))
+        
         try:
             if nombre:
                 url_totales = f"https://{API_URL}recibos/totales"
@@ -182,16 +189,18 @@ def main(page: ft.Page):
                 total_neto = totales_data.get("total_neto", 0)
                 total_descuento = totales_data.get("total_descuento", 0)
 
-                # Mostrar en la interfaz
                 totales_card.content = ft.Column([
-                    ft.Text(f"Total Neto: ${total_neto:.2f}", size=16, weight=ft.FontWeight.BOLD, color=ft.colors.GREEN_800),
-                    ft.Text(f"Total Descuento: ${total_descuento:.2f}", size=16, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_800)
+                    ft.Text(f"Total Neto: ${format(total_neto, ',.2f')}", size=22, weight=ft.FontWeight.BOLD, color=ft.colors.BLACK),
+                    ft.Text(f"Total Descuento: ${format(total_descuento, ',.2f')}", size=16, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_800)
                 ])
             else:
                 print("Error en totales:", response_totales.status_code, response_totales.json().get("detail"))
 
         except Exception as e:
             print("Ocurrió un error al obtener los totales:", str(e))
+        
+        # Ocultar el loader
+        loader.visible = False
         page.update()
 
 
@@ -203,6 +212,7 @@ def main(page: ft.Page):
         ft.Column([
             encabezado,
             botones,
+            loader,
             totales_card,
             ft.Column([resultado_card], scroll=ft.ScrollMode.AUTO, height=400)
         ], spacing=20)
