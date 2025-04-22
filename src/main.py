@@ -15,7 +15,7 @@ def main(page: ft.Page):
 
 
     logo = ft.Image(
-        src="https://i.ibb.co/39mHLD0F/302758110-521965529877359-8774327118159018627-n.jpg", 
+        src="https://i.ibb.co/PvvPNzhk/Imagen-de-Whats-App-2025-04-22-a-las-15-46-24-f6a2c21e.jpg", 
         width=60,
         height=60,
         fit=ft.ImageFit.CONTAIN
@@ -207,5 +207,6 @@ def main(page: ft.Page):
             ft.Column([resultado_card], scroll=ft.ScrollMode.AUTO, height=400)
         ], spacing=20)
     )
+    buscar_producto(None)
 
 ft.app(target=main)
