@@ -15,14 +15,14 @@ def main(page: ft.Page):
 
 
     logo = ft.Image(
-        src="https://i.ibb.co/PsntpRQK/Escudo-de-Telchac-Pueblo-svg.png", 
+        src="https://i.ibb.co/39mHLD0F/302758110-521965529877359-8774327118159018627-n.jpg", 
         width=60,
         height=60,
         fit=ft.ImageFit.CONTAIN
     )
 
     titulo_empresa = ft.Text(
-        "TELCHAC PUEBLO",
+        "TELCHAC PUERTO",
         size=26,
         weight=ft.FontWeight.BOLD,
         color=ft.colors.WHITE
@@ -196,7 +196,7 @@ def main(page: ft.Page):
 
 
     botones = ft.Row([
-        ft.ElevatedButton("Buscar", on_click=lambda e: buscar_producto(contribuyente_input.value.strip()), width=180, height=40, icon=ft.icons.SEARCH),
+        ft.ElevatedButton("Buscar", on_click=lambda e: buscar_producto(contribuyente_input.value.strip()), width=250, height=40, icon=ft.icons.SEARCH, bgcolor=ft.colors.LIME, color=ft.colors.WHITE, icon_color=ft.colors.WHITE),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
     page.add(
