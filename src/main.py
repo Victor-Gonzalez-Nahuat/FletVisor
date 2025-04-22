@@ -1,213 +1,211 @@
 import flet as ft
-import pymysql
-import pandas as pd
-from datetime import datetime
+import datetime
+import requests
 
-DB_CONFIG = {
-    "host": "yamanote.proxy.rlwy.net",
-    "port": 51558,
-    "user": "root",
-    "password": "UJuewnvyQAwjjEIjUeBJPJRGyVOqKbDE",
-    "database": "railway"
-}
-
-cols = [
-    "Recibo", "Fecha", "Neto", "Descuento"
-]
+API_URL = "api-telchac-production.up.railway.app/"
 
 def main(page: ft.Page):
-    page.title = "ERP METEORITO - Visor Web"
-    page.scroll = "always"
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.BLUE)
+    page.title = "Recibos"
+    page.padding = 10
 
-    filtro_txt = ft.TextField(label="Buscar por contribuyente", width=350)
-    fecha_desde_val = {"value": datetime.today()}
-    fecha_hasta_val = {"value": datetime.today()}
+    hoy = datetime.date.today()
+    hoy_str = hoy.isoformat()
 
-    fecha_desde_txt = ft.TextField(label="Desde", width=150, read_only=True)
-    fecha_hasta_txt = ft.TextField(label="Hasta", width=150, read_only=True)
 
-    dp_desde = ft.DatePicker(
-
-        on_change=lambda e: actualizar_fecha(e, fecha_desde_val)
+    logo = ft.Image(
+        src="https://i.ibb.co/PsntpRQK/Escudo-de-Telchac-Pueblo-svg.png", 
+        width=60,
+        height=60,
+        fit=ft.ImageFit.CONTAIN
     )
+
+    titulo_empresa = ft.Text(
+        "TELCHAC PUEBLO",
+        size=26,
+        weight=ft.FontWeight.BOLD,
+        color=ft.colors.WHITE
+    )
+
+    titulo = ft.Text(
+        "Buscar Recibos por Contribuyente",
+        size=28,
+        weight=ft.FontWeight.BOLD,
+        color=ft.colors.WHITE
+    )
+
+    contribuyente_input = ft.TextField(
+        label="Contribuyente", 
+        width=1000, 
+        color=ft.colors.WHITE, 
+        border_color=ft.colors.WHITE, 
+        cursor_color=ft.colors.WHITE
+    )
+
+    txt_fecha_desde = ft.TextField(label="Desde", read_only=True, width=150, value=hoy_str)
+    txt_fecha_hasta = ft.TextField(label="Hasta", read_only=True, width=150, value=hoy_str)
+
+    def actualizar_fecha(text_field, nueva_fecha):
+        fecha_obj = datetime.datetime.fromisoformat(nueva_fecha)
+        fecha_formateada = fecha_obj.date().isoformat()
+        text_field.value = fecha_formateada
+        page.update()
+
+    date_picker_desde = ft.DatePicker(
+        on_change=lambda e: actualizar_fecha(txt_fecha_desde, e.data),
+    )
+    date_picker_hasta = ft.DatePicker(
+        on_change=lambda e: actualizar_fecha(txt_fecha_hasta, e.data),
+    )
+    page.overlay.extend([date_picker_desde, date_picker_hasta])
+
+    fecha_desde_btn = ft.ElevatedButton(
+        "Fecha desde",
+        icon=ft.Icons.CALENDAR_MONTH,
+        on_click=lambda e: page.open(date_picker_desde)
+    )
+
+    fecha_hasta_btn = ft.ElevatedButton(
+        "Fecha hasta",
+        icon=ft.Icons.CALENDAR_MONTH,
+        on_click=lambda e: page.open(date_picker_hasta)
+    )
+
+    encabezado = ft.Container(
+        content=ft.Column([
+            ft.Row([logo, titulo_empresa]),
+            contribuyente_input,
+            ft.Row([fecha_desde_btn, fecha_hasta_btn]),
+            ft.Row([txt_fecha_desde, txt_fecha_hasta])
+        ]),
+        padding=20,
+        bgcolor=ft.colors.BLUE,
+        border_radius=ft.BorderRadius(top_left=0, top_right=0, bottom_left=20, bottom_right=20),
+    )
+
+    resultado_card = ft.Container(
+        content=ft.Column([], scroll=ft.ScrollMode.AUTO, height=400),
+        padding=10
+    )
+
+    totales_card = ft.Container(
+        content=ft.Text("Totales: ", size=18, weight=ft.FontWeight.BOLD),
+        padding=10
+    )
+
+
     
-    dp_hasta = ft.DatePicker(
-        on_change=lambda e: actualizar_fecha(e, fecha_hasta_val)
-    )
 
-    def actualizar_fecha(e, fecha: dict):
-        fecha["value"] = e.control.value
-        fecha_str = fecha["value"].strftime('%d/%m/%Y') 
+    def mostrar_resultados(data):
+        recibos_widgets = []
 
-        if fecha is fecha_desde_val:
-            fecha_desde_txt.value = fecha_str
-        elif fecha is fecha_hasta_val:
-            fecha_hasta_txt.value = fecha_str
+        for recibo in data:
+            tarjeta = ft.Card(
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"Recibo: {recibo['recibo']}", weight=ft.FontWeight.BOLD, size=18),
+                        ft.Text(f"Contribuyente: {recibo['contribuyente']}"),
+                        ft.Text(f"Concepto: {recibo['concepto']}"),
+                        ft.Text(f"Fecha: {recibo['fecha']}"),
+                        ft.Text(f"Neto: ${recibo['neto']}", weight=ft.FontWeight.BOLD, color=ft.colors.GREEN_800),
+                        ft.Text(f"Descuento: ${recibo['descuento']}")
+                    ]),
+                    padding=15,
+                    bgcolor=ft.colors.WHITE,
+                    border_radius=10,
+                    shadow=ft.BoxShadow(
+                        blur_radius=8,
+                        color=ft.colors.GREY_400,
+                        offset=ft.Offset(2, 2)
+                    )
+                ),
+                elevation=2
+            )
+            recibos_widgets.append(tarjeta)
+        resultado_card.content = ft.Column(recibos_widgets, spacing=10, scroll=ft.ScrollMode.AUTO)
+        page.update()
 
+    def buscar_producto(nombre):
+        desde = txt_fecha_desde.value
+        hasta = txt_fecha_hasta.value
+        desde_formateada = desde.replace("-", "")[2:]
+        hasta_formateada = hasta.replace("-", "")[2:]
+
+        print(f"Contribuyente: {nombre}, Desde: {desde_formateada}, Hasta: {hasta_formateada}")
+
+        try:
+            if nombre: 
+                url = f"https://{API_URL}recibos/filtrar"
+                params = {
+                    "desde": desde_formateada,
+                    "hasta": hasta_formateada,
+                    "contribuyente": nombre
+                }
+            else: 
+                url = f"https://{API_URL}recibos"
+                params = {
+                    "desde": desde_formateada,
+                    "hasta": hasta_formateada
+                }
+
+            response = requests.get(url, params=params)
+
+            if response.status_code == 200:
+                data = response.json()
+                print("Recibos encontrados:", data)
+                mostrar_resultados(data)
+            else:
+                print("Error:", response.status_code, response.json().get("detail"))
+
+        except Exception as e:
+            print("Ocurrió un error al hacer la petición:", str(e))
+        try:
+            if nombre:
+                url_totales = f"https://{API_URL}recibos/totales"
+                params_totales = {
+                    "desde": desde_formateada,
+                    "hasta": hasta_formateada,
+                    "contribuyente": nombre
+                }
+            else:
+                url_totales = f"https://{API_URL}recibos/totales"
+                params_totales = {
+                    "desde": desde_formateada,
+                    "hasta": hasta_formateada
+                }
+
+            response_totales = requests.get(url_totales, params=params_totales)
+
+            if response_totales.status_code == 200:
+                totales_data = response_totales.json()
+                total_neto = totales_data.get("total_neto", 0)
+                total_descuento = totales_data.get("total_descuento", 0)
+
+                # Mostrar en la interfaz
+                totales_card.content = ft.Column([
+                    ft.Text(f"Total Neto: ${total_neto:.2f}", size=16, weight=ft.FontWeight.BOLD, color=ft.colors.GREEN_800),
+                    ft.Text(f"Total Descuento: ${total_descuento:.2f}", size=16, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_800)
+                ])
+            else:
+                print("Error en totales:", response_totales.status_code, response_totales.json().get("detail"))
+
+        except Exception as e:
+            print("Ocurrió un error al obtener los totales:", str(e))
         page.update()
 
 
-    desde_fecha = ft.ElevatedButton("Desde Fecha", icon=ft.Icons.CALENDAR_MONTH, on_click=lambda _: page.open(dp_desde))
-    hasta_fecha = ft.ElevatedButton("Hasta Fecha", icon=ft.Icons.CALENDAR_MONTH, on_click=lambda _: page.open(dp_hasta))
-
-    tabla = ft.DataTable(columns=[ft.DataColumn(ft.Text(col)) for col in cols], rows=[])
-
-    datos = []
-
-    def cargar_datos_filtros(e=None):
-        tabla.rows.clear()
-        datos.clear()
-
-        fecha_desde = fecha_desde_val["value"]
-        fecha_hasta = fecha_hasta_val["value"]
-
-        if not fecha_desde or not fecha_hasta:
-            page.snack_bar = ft.SnackBar(ft.Text("Debes seleccionar ambas fechas"), open=True)
-            page.update()
-            return
-
-        desde_str = fecha_desde.strftime('%y%m%d')
-        hasta_str = fecha_hasta.strftime('%y%m%d')
-
-        try:
-            conexion = pymysql.connect(**DB_CONFIG)
-            cursor = conexion.cursor()
-            query = """
-                SELECT id_recibo, id_fecha, id_neto, id_descuento
-                FROM TEARMO01
-                WHERE id_fecha BETWEEN %s AND %s
-            """
-            cursor.execute(query, (desde_str, hasta_str))
-            resultados = cursor.fetchall()
-
-            for row in resultados:
-                datos.append(row)
-                tabla.rows.append(
-                    ft.DataRow(cells=[ft.DataCell(ft.Text(str(cell))) for cell in row])
-                )
-            page.update()
-        except Exception as err:
-            page.snack_bar = ft.SnackBar(ft.Text(f"Error: {err}"), open=True)
-            page.update()
-
-
-    def cargar_datos_hoy(e=None):
-
-        hoy = datetime.today().strftime('%y%m%d')
-
-        try:
-            conexion = pymysql.connect(**DB_CONFIG)
-            cursor = conexion.cursor()
-            query = """
-                SELECT id_recibo, id_fecha, id_neto, id_descuento
-                FROM TEARMO01
-                WHERE id_fecha = %s
-            """
-            cursor.execute(query, (hoy,))
-            resultados = cursor.fetchall()
-
-            tabla.rows.clear()
-            datos.clear()
-
-            for row in resultados:
-                datos.append(row)
-                tabla.rows.append(
-                        ft.DataRow(cells=[ft.DataCell(ft.Text(str(cell))) for cell in row])
-                )
-            page.update()
-        except Exception as err:
-            page.snack_bar = ft.SnackBar(ft.Text(f"Error: {err}"), open=True)
-            page.update()
-
-    def buscar_por_contribuyente_y_fecha():
-        tabla.rows.clear()
-        datos.clear()
-
-        fecha_desde = fecha_desde_val["value"]
-        fecha_hasta = fecha_hasta_val["value"]
-        filtro = filtro_txt.value.strip().lower()
-
-        if not fecha_desde or not fecha_hasta or not filtro:
-            page.snack_bar = ft.SnackBar(ft.Text("Debes seleccionar ambas fechas y escribir un contribuyente"), open=True)
-            page.update()
-            return
-
-        desde_str = fecha_desde.strftime('%y%m%d')
-        hasta_str = fecha_hasta.strftime('%y%m%d')
-
-        try:
-            conexion = pymysql.connect(**DB_CONFIG)
-            cursor = conexion.cursor()
-            query = """
-                SELECT id_recibo, id_fecha, id_neto, id_descuento
-                FROM TEARMO01
-                WHERE id_fecha BETWEEN %s AND %s AND LOWER(id_contribuyente) LIKE %s
-            """
-            cursor.execute(query, (desde_str, hasta_str, f"%{filtro}%"))
-            resultados = cursor.fetchall()
-
-            for row in resultados:
-                datos.append(row)
-                tabla.rows.append(
-                    ft.DataRow(cells=[ft.DataCell(ft.Text(str(cell))) for cell in row])
-                )
-            page.update()
-        except Exception as err:
-            page.snack_bar = ft.SnackBar(ft.Text(f"Error: {err}"), open=True)
-            page.update()
-
-    def buscar(e=None):
-        filtro = filtro_txt.value.strip()
-        tiene_fechas = fecha_desde_val["value"] is not None and fecha_hasta_val["value"] is not None
-
-        if filtro and tiene_fechas:
-            buscar_por_contribuyente_y_fecha()
-        elif tiene_fechas:
-            cargar_datos_filtros()
-        else:
-            cargar_datos_hoy()
-
-    def exportar_excel(e):
-        if not datos:
-            page.snack_bar = ft.SnackBar(ft.Text("No hay datos para exportar."), open=True)
-            page.update()
-            return
-        df = pd.DataFrame(datos, columns=cols)
-        archivo = "exportado_recibos.xlsx"
-        df.to_excel(archivo, index=False)
-        page.snack_bar = ft.SnackBar(ft.Text(f"Exportado a {archivo}"), open=True)
-        page.update()
-
-    fecha_hoy = datetime.today().strftime('%d/%m/%Y')
-    fecha_desde_txt.value = fecha_hoy
-    fecha_hasta_txt.value = fecha_hoy
+    botones = ft.Row([
+        ft.ElevatedButton("Buscar", on_click=lambda e: buscar_producto(contribuyente_input.value.strip()), width=180, height=40, icon=ft.icons.SEARCH),
+    ], alignment=ft.MainAxisAlignment.CENTER)
 
     page.add(
-        ft.Row([
-            filtro_txt,
-        ], alignment=ft.MainAxisAlignment.CENTER),
-        ft.Row([
-            desde_fecha,
-            hasta_fecha,
-        ], alignment= ft.MainAxisAlignment.CENTER),
-        ft.Row([
-            fecha_desde_txt,
-            fecha_hasta_txt
-        ], alignment=ft.MainAxisAlignment.CENTER),
-        ft.Row([
-            ft.ElevatedButton("Buscar", on_click=buscar),
-            ft.ElevatedButton("Exportar Excel", on_click=exportar_excel, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE),
-        ]),
-        ft.Container(height=20),
         ft.Column([
-            ft.Row([
-                tabla
-            ], width=350, scroll=ft.ScrollMode.AUTO)
-        ], height=300, scroll=ft.ScrollMode.AUTO)
+            encabezado,
+            botones,
+            totales_card,
+            ft.Column([resultado_card], scroll=ft.ScrollMode.AUTO, height=400)
+        ], spacing=20)
     )
-    cargar_datos_hoy()
-
-    
 
 ft.app(target=main)
