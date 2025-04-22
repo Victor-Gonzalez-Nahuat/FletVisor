@@ -212,7 +212,9 @@ def main(page: ft.Page):
         ft.Column([
             encabezado,
             botones,
-            loader,
+            ft.Row([
+                loader,
+            ],alignment=ft.MainAxisAlignment.CENTER),
             totales_card,
             ft.Column([resultado_card], scroll=ft.ScrollMode.AUTO, height=400)
         ], spacing=20)
