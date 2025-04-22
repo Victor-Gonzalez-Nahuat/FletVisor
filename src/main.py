@@ -179,7 +179,6 @@ def main(page: ft.Page):
         page.snack_bar = ft.SnackBar(ft.Text(f"Exportado a {archivo}"), open=True)
         page.update()
 
-    # Inicializar las fechas en los campos de texto
     fecha_hoy = datetime.today().strftime('%d/%m/%Y')
     fecha_desde_txt.value = fecha_hoy
     fecha_hasta_txt.value = fecha_hoy
