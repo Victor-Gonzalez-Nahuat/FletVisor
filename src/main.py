@@ -2,7 +2,7 @@ import flet as ft
 import datetime
 import requests
 
-API_URL = "https://api-telchac-production-45c8.up.railway.app/"
+API_URL = "https://api-telchac-production-45c8.up.railway.app/ "
 
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
@@ -163,7 +163,7 @@ def main(page: ft.Page):
         data = []
 
         try:
-            url = f"{API_URL}recibos/filtrar" if "contribuyente" in params else f"{API_URL}recibos"
+            url = f"{API_URL}recibos/filtrar" if "contribuyente" in params else f"{API_URL}recibos/totales"
             response = requests.get(url, params=params)
             if response.status_code == 200:
                 data = response.json()
