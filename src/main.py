@@ -7,7 +7,7 @@ API_URL = "https://api-telchac-production-45c8.up.railway.app/"
 
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.theme = ft.Theme(color_scheme_seed=ft.colors.RED)
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.RED)
     page.title = "Recibos"
     page.padding = 10
 
@@ -25,15 +25,15 @@ def main(page: ft.Page):
         width=60, height=60, fit=ft.ImageFit.CONTAIN
     )
 
-    titulo_empresa = ft.Text("TELCHAC PUERTO", size=26, weight=ft.FontWeight.BOLD, color=ft.colors.WHITE)
-    titulo = ft.Text("Consulta de Recibos", size=28, weight=ft.FontWeight.BOLD, color=ft.colors.WHITE)
+    titulo_empresa = ft.Text("TELCHAC PUERTO", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    titulo = ft.Text("Consulta de Recibos", size=28, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
 
     txt_fecha_desde = ft.TextField(label="Desde", read_only=True, width=150,
-                                   value=hoy.strftime("%d-%m-%Y"), bgcolor=ft.colors.WHITE)
+                                   value=hoy.strftime("%d-%m-%Y"), bgcolor=ft.Colors.WHITE)
     txt_fecha_desde.data = hoy_str
 
     txt_fecha_hasta = ft.TextField(label="Hasta", read_only=True, width=150,
-                                   value=hoy.strftime("%d-%m-%Y"), bgcolor=ft.colors.WHITE)
+                                   value=hoy.strftime("%d-%m-%Y"), bgcolor=ft.Colors.WHITE)
     txt_fecha_hasta.data = hoy_str
 
     def actualizar_fecha(txt, nueva_fecha):
@@ -54,14 +54,14 @@ def main(page: ft.Page):
         label="Filtrar por contribuyente (opcional)",
         width=400,
         text_size=14,
-        border_color=ft.colors.GREY,
-        color=ft.colors.BLACK,
-        cursor_color=ft.colors.BLACK
+        border_color=ft.Colors.GREY,
+        color=ft.Colors.BLACK,
+        cursor_color=ft.Colors.BLACK
     )
 
     buscar_btn = ft.ElevatedButton("Buscar",
         width=300, height=40, icon=ft.icons.SEARCH,
-        bgcolor=ft.colors.GREEN, color=ft.colors.WHITE
+        bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE
     )
     buscar_btn.on_click = lambda e: buscar_producto(contribuyente_input.value)
 
@@ -75,13 +75,13 @@ def main(page: ft.Page):
             contribuyente_input
         ]),
         padding=20,
-        bgcolor=ft.colors.RED,
+        bgcolor=ft.Colors.RED,
         border_radius=ft.BorderRadius(0, 0, 20, 20)
     )
 
     resultado_card = ft.Container(content=ft.Column([], scroll=ft.ScrollMode.AUTO, height=200), padding=10)
     totales_card = ft.Container()
-    loader = ft.ProgressRing(visible=False, color=ft.colors.ORANGE, stroke_width=4)
+    loader = ft.ProgressRing(visible=False, color=ft.Colors.ORANGE, stroke_width=4)
 
     def formatear_fecha_yymmdd(f):
         try:
@@ -111,7 +111,7 @@ def main(page: ft.Page):
 
         for r in fragmento:
             es_cancelado = r.get("status", r.get("id_status", "0")) == "1"
-            color_texto = ft.colors.GREY if es_cancelado else ft.colors.BLACK
+            color_texto = ft.Colors.GREY if es_cancelado else ft.Colors.BLACK
             estado = "❌ CANCELADO" if es_cancelado else ""
 
             tarjeta = ft.Card(
@@ -121,7 +121,7 @@ def main(page: ft.Page):
                         ft.Text(f"Contribuyente: {r['contribuyente']}", color=color_texto),
                         ft.Text(f"Concepto: {r['concepto']}", color=color_texto),
                         ft.Text(f"Fecha: {formatear_fecha_yymmdd(r['fecha'])}", color=color_texto),
-                        ft.Text(f"Neto: ${float(r['neto']):,.2f}", weight=ft.FontWeight.BOLD, color=ft.colors.GREEN_800 if not es_cancelado else ft.colors.GREY),
+                        ft.Text(f"Neto: ${float(r['neto']):,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.GREEN_800 if not es_cancelado else ft.Colors.GREY),
                         ft.Text(f"Descuento: ${float(r['descuento']):,.2f}", color=color_texto)
                     ]),
                     padding=15,
@@ -188,8 +188,8 @@ def main(page: ft.Page):
                 totales_card.content = ft.Column([
                     ft.Text(f"Total Neto: ${float(d.get('total_neto', 0)):,.2f}", size=22, weight=ft.FontWeight.BOLD),
                     ft.Text(f"Total Descuento: ${float(d.get('total_descuento', 0)):,.2f}", size=16, weight=ft.FontWeight.BOLD),
-                    ft.Text(f"Recibos encontrados: {len(data)}", size=14, color=ft.colors.BLACK),
-                    ft.Text(f"Recibos cancelados: {d.get('cantidad_status_1', 0)}", size=14, color=ft.colors.RED_700)
+                    ft.Text(f"Recibos encontrados: {len(data)}", size=14, color=ft.Colors.BLACK),
+                    ft.Text(f"Recibos cancelados: {d.get('cantidad_status_1', 0)}", size=14, color=ft.Colors.RED_700)
                 ])
         except Exception as e:
             print("Error al obtener totales:", str(e))
