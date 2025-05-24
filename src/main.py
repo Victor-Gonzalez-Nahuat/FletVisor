@@ -63,7 +63,10 @@ def main(page: ft.Page):
         width=300, height=40, icon=ft.icons.SEARCH,
         bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
-    desplegar_btn = ft.IconButton(icon= ft.Icons.ARROW_DOWNWARD,width= 50, height=40, bgcolor=ft.Colors.AMBER, icon_color=ft.Colors.WHITE)
+    desplegar_btn = ft.ElevatedButton("Resumen",
+        width=150, height=40, icon=ft.icons.INFO,
+        bgcolor=ft.Colors.AMBER, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
+    )
     buscar_btn.on_click = lambda e: buscar_producto(contribuyente_input.value)
     desplegar_btn.on_click = lambda e: mostrar_despliegue_totales()
 
@@ -203,7 +206,7 @@ def main(page: ft.Page):
         buscar_btn.disabled = False
         fecha_hasta_btn.disabled = False
         fecha_desde_btn.disabled = False
-        buscar_btn.width = 250
+        buscar_btn.width = 150
         desplegar_btn.visible = True
         page.update()
 
