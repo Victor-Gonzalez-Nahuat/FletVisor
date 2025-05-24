@@ -61,9 +61,13 @@ def main(page: ft.Page):
 
     buscar_btn = ft.ElevatedButton("Buscar",
         width=300, height=40, icon=ft.icons.SEARCH,
-        bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE
+        bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
+    desplegar_btn = ft.IconButton(icon= ft.Icons.ARROW_DOWNWARD,width= 50, height=40, bgcolor=ft.Colors.AMBER, icon_color=ft.Colors.WHITE)
     buscar_btn.on_click = lambda e: buscar_producto(contribuyente_input.value)
+    desplegar_btn.on_click = lambda e: mostrar_despliegue_totales()
+
+    desplegar_dialog = ft.AlertDialog(title=ft.Text("Despliegue de Totales"))
 
     encabezado = ft.Container(
         content=ft.Column([
@@ -71,7 +75,7 @@ def main(page: ft.Page):
             titulo,
             ft.Row([fecha_desde_btn, fecha_hasta_btn]),
             ft.Row([txt_fecha_desde, txt_fecha_hasta]),
-            ft.Row([buscar_btn], alignment=ft.MainAxisAlignment.START),
+            ft.Row([buscar_btn, desplegar_btn], alignment=ft.MainAxisAlignment.START),
             contribuyente_input
         ]),
         padding=20,
@@ -151,6 +155,8 @@ def main(page: ft.Page):
         loader.visible = True
         fecha_desde_btn.disabled = True
         fecha_hasta_btn.disabled = True
+        desplegar_btn.visible = False
+        buscar_btn.width = 300
         page.update()
 
         desde_date = datetime.fromisoformat(txt_fecha_desde.data).date()
@@ -165,7 +171,6 @@ def main(page: ft.Page):
         if nombre:
             params["contribuyente"] = nombre
 
-        # Resto del código permanece igual...
         cancelados = 0
         data = []
 
@@ -198,7 +203,49 @@ def main(page: ft.Page):
         buscar_btn.disabled = False
         fecha_hasta_btn.disabled = False
         fecha_desde_btn.disabled = False
+        buscar_btn.width = 250
+        desplegar_btn.visible = True
         page.update()
+
+    def mostrar_despliegue_totales():
+        desde_date = datetime.fromisoformat(txt_fecha_desde.data).date()
+        hasta_date = datetime.fromisoformat(txt_fecha_hasta.data).date()
+
+        desde = desde_date.strftime("%y%m%d")  # Formato YYMMDD
+        hasta = hasta_date.strftime("%y%m%d")  # Formato YYMMDD
+
+        params = {"desde": desde, "hasta": hasta}
+        try:
+            response = requests.get(f"{API_URL}recibos/totales/despliegue", params=params)
+            if response.status_code == 200:
+                data = response.json()
+                if not data:
+                    desplegar_dialog.content = ft.Text("No se encontraron totales en este rango de fechas.")
+                    page.open(desplegar_dialog)
+                    return
+
+                items = []
+                for cuenta_data in data:
+                    cuenta = cuenta_data.get("cuenta", "Sin cuenta")
+                    total_neto = cuenta_data.get("total_neto", 0.0)
+                    total_descuento = cuenta_data.get("total_descuento", 0.0)
+
+                    items.append(ft.Text(f"Cuenta: {cuenta}", size=18, weight=ft.FontWeight.BOLD))
+                    items.append(ft.Text(f"  Total Neto: ${total_neto:,.2f}", size=16))
+                    items.append(ft.Text(f"  Total Descuento: ${total_descuento:,.2f}", size=16))
+                    items.append(ft.Divider())  # Línea divisoria entre cuentas
+
+                desplegar_dialog.content = ft.Column(items, height=400, scroll=ft.ScrollMode.ALWAYS)
+                page.open(desplegar_dialog)  # ← Abrir aquí, después de llenar el contenido
+
+            else:
+                desplegar_dialog.content = ft.Text(f"Error al obtener datos: {response.status_code}")
+                page.open(desplegar_dialog)
+        except Exception as e:
+            print("Error al obtener totales:", str(e))
+            desplegar_dialog.content = ft.Text("Hubo un error al intentar obtener los datos.")
+            page.open(desplegar_dialog)
+
 
     page.add(
         ft.Column([
