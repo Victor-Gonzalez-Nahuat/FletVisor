@@ -1,5 +1,5 @@
 import flet as ft
-from datetime import datetime
+from datetime import datetime, date
 import requests
 import pytz
 
@@ -41,8 +41,8 @@ def main(page: ft.Page):
         txt.value = datetime.fromisoformat(nueva_fecha).strftime("%d-%m-%Y")
         page.update()
 
-    date_picker_desde = ft.DatePicker(on_change=lambda e: actualizar_fecha(txt_fecha_desde, e.data))
-    date_picker_hasta = ft.DatePicker(on_change=lambda e: actualizar_fecha(txt_fecha_hasta, e.data))
+    date_picker_desde = ft.DatePicker(on_change=lambda e: actualizar_fecha(txt_fecha_desde, e.data), value=date.today())
+    date_picker_hasta = ft.DatePicker(on_change=lambda e: actualizar_fecha(txt_fecha_hasta, e.data), value=date.today())
     page.overlay.extend([date_picker_desde, date_picker_hasta])
 
     fecha_desde_btn = ft.ElevatedButton("Fecha desde", icon=ft.icons.CALENDAR_MONTH,
