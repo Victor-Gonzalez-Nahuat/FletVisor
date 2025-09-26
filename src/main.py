@@ -25,7 +25,7 @@ def main(page: ft.Page):
         width=60, height=60, fit=ft.ImageFit.CONTAIN
     )
 
-    titulo_empresa = ft.Text("TELCHAC PUERTOo", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    titulo_empresa = ft.Text("TELCHAC PUERTOoo", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
     titulo = ft.Text("Consulta de Recibos", size=28, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
 
     txt_fecha_desde = ft.TextField(label="Desde", read_only=True, width=150,
