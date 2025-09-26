@@ -25,7 +25,7 @@ def main(page: ft.Page):
         width=60, height=60, fit=ft.ImageFit.CONTAIN
     )
 
-    titulo_empresa = ft.Text("TELCHAC PUERTO", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    titulo_empresa = ft.Text("TELCHAC PUERTOo", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
     titulo = ft.Text("Consulta de Recibos", size=28, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
 
     txt_fecha_desde = ft.TextField(label="Desde", read_only=True, width=150,
@@ -45,9 +45,9 @@ def main(page: ft.Page):
     date_picker_hasta = ft.DatePicker(on_change=lambda e: actualizar_fecha(txt_fecha_hasta, e.data), value=date.today())
     page.overlay.extend([date_picker_desde, date_picker_hasta])
 
-    fecha_desde_btn = ft.ElevatedButton("Fecha desde", icon=ft.icons.CALENDAR_MONTH,
+    fecha_desde_btn = ft.ElevatedButton("Fecha desde", icon=ft.Icons.CALENDAR_MONTH,
                                         on_click=lambda e: page.open(date_picker_desde))
-    fecha_hasta_btn = ft.ElevatedButton("Fecha hasta", icon=ft.icons.CALENDAR_MONTH,
+    fecha_hasta_btn = ft.ElevatedButton("Fecha hasta", icon=ft.Icons.CALENDAR_MONTH,
                                         on_click=lambda e: page.open(date_picker_hasta))
 
     contribuyente_input = ft.TextField(
@@ -60,11 +60,11 @@ def main(page: ft.Page):
     )
 
     buscar_btn = ft.ElevatedButton("Buscar",
-        width=300, height=40, icon=ft.icons.SEARCH,
+        width=300, height=40, icon=ft.Icons.SEARCH,
         bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
     desplegar_btn = ft.ElevatedButton("Resumen",
-        width=150, height=40, icon=ft.icons.INFO,
+        width=150, height=40, icon=ft.Icons.INFO,
         bgcolor=ft.Colors.AMBER, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
     buscar_btn.on_click = lambda e: buscar_producto(contribuyente_input.value)
@@ -132,9 +132,9 @@ def main(page: ft.Page):
                         ft.Text(f"Descuento: ${float(r['descuento']):,.2f}", color=color_texto)
                     ]),
                     padding=15,
-                    bgcolor=ft.colors.WHITE,
+                    bgcolor=ft.Colors.WHITE,
                     border_radius=10,
-                    shadow=ft.BoxShadow(blur_radius=8, color=ft.colors.GREY_400, offset=ft.Offset(2, 2))
+                    shadow=ft.BoxShadow(blur_radius=8, color=ft.Colors.GREY_400, offset=ft.Offset(2, 2))
                 ),
                 elevation=2
             )
