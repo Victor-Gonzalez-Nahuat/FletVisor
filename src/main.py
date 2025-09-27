@@ -70,7 +70,7 @@ def main(page: ft.Page):
     )
 
     cedulas_btn = ft.ElevatedButton(
-        "Cédulas", width=300, height=40, icon=ft.Icons.DOCK_SHARP,
+        "ir a Cédulas", width=300, height=40, icon=ft.Icons.DOCK_SHARP,
         bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
 
@@ -97,6 +97,15 @@ def main(page: ft.Page):
         bgcolor=ft.Colors.RED,
         border_radius=ft.BorderRadius(0, 0, 20, 20)
     )
+
+    def show_snack(msg: str, icon=ft.Icons.INFO, bg=ft.Colors.BLUE_GREY_100):
+        snack_bar = ft.SnackBar(
+            content=ft.Row([ft.Icon(icon), ft.Text(msg)], tight=True, spacing=8),
+            bgcolor=bg,
+            show_close_icon=True
+        )
+        page.open(snack_bar)
+        page.update()
 
     # --- Lógica de HOME (RECIBOS) ---
     def formatear_fecha_yymmdd(f):
@@ -188,10 +197,25 @@ def main(page: ft.Page):
             if response.status_code == 200:
                 data = response.json()
                 mostrar_resultados(data)
+                # Aviso si no hay resultados
+            if not data:
+                rango = f"{txt_fecha_desde.value} a {txt_fecha_hasta.value}"
+                criterio = f" para '{nombre}'" if nombre else ""
+                show_snack(f"No se encontraron recibos de {rango}{criterio}.", icon=ft.Icons.SEARCH_OFF, bg=ft.Colors.RED)
+                resultado_card.content = ft.Column(
+                    [ft.Container(
+                        content=ft.Row([ft.Icon(ft.Icons.SEARCH_OFF), ft.Text("Sin recibos en este rango.")]),
+                        padding=10,
+                        bgcolor=ft.Colors.GREY_100,
+                        border_radius=10,
+                    )],
+                    spacing=10, scroll=ft.ScrollMode.ALWAYS, height=200
+                )
             else:
                 print("Error:", response.status_code, response.json().get("detail"))
         except Exception as e:
             print("Error al buscar recibos:", str(e))
+            show_snack(f"Error {response.status_code} al consultar recibos.")
 
         try:
             response_totales = requests.get(f"{API_URL}recibos/totales", params=params)
@@ -275,8 +299,10 @@ def main(page: ft.Page):
         """
         Vista CÉDULAS:
         - Misma GUI que la principal.
-        - Conectada a /cedulas?desde=YYMMDD&hasta=YYMMDD
-        - Tarjetas muestran: folio, motivo, fecham, contribuyente, direccion.
+        - Conectada a:
+            * /cedulas?desde=YYMMDD&hasta=YYMMDD
+            * /cedulas/filtrar?desde=YYMMDD&hasta=YYMMDD&contribuyente=...
+        - Tarjetas: folio, motivo, fecham, contribuyente, direccion.
         """
         # --- Estado local de CÉDULAS ---
         c_todos = []
@@ -444,18 +470,33 @@ def main(page: ft.Page):
             hasta = c_fmt_api(c_txt_hasta.data)  # YYMMDD
             params = {"desde": desde, "hasta": hasta}
 
-            # Si luego soportas filtro por contribuyente en /cedulas, lo dejamos preparado:
+            # Filtro por contribuyente: si hay texto, usamos /cedulas/filtrar
             nombre = (nombre_raw or "").strip()
-            if nombre:
+            use_filter = len(nombre) > 0
+            if use_filter:
                 params["contribuyente"] = nombre
 
             data = []
             try:
-                url = f"{API_URL}cedulas"
+                url = f"{API_URL}cedulas/filtrar" if use_filter else f"{API_URL}cedulas"
                 response = requests.get(url, params=params)
                 if response.status_code == 200:
                     data = response.json()
                     c_mostrar_resultados(data)
+                    # Aviso si no hay resultados
+                if not data:
+                    rango = f"{c_txt_desde.value} a {c_txt_hasta.value}"
+                    criterio = f" para '{nombre}'" if use_filter else ""
+                    show_snack(f"No se encontraron cédulas de {rango}{criterio}.", icon=ft.Icons.SEARCH_OFF, bg=ft.Colors.RED)
+                    c_resultado_card.content = ft.Column(
+                        [ft.Container(
+                            content=ft.Row([ft.Icon(ft.Icons.SEARCH_OFF), ft.Text("Sin cédulas en este rango.")]),
+                            padding=10,
+                            bgcolor=ft.Colors.GREY_100,
+                            border_radius=10,
+                        )],
+                        spacing=10, scroll=ft.ScrollMode.ALWAYS, height=200
+                    )
                 else:
                     print("Error:", response.status_code, getattr(response, "text", ""))
                     page.snack_bar = ft.SnackBar(ft.Text(f"Error {response.status_code} al consultar cédulas."))
@@ -464,8 +505,9 @@ def main(page: ft.Page):
                 print("Error al buscar cédulas:", str(e))
                 page.snack_bar = ft.SnackBar(ft.Text("No se pudo consultar cédulas (revisa conexión/servidor)."))
                 page.snack_bar.open = True
+                show_snack("No se pudo consultar cédulas (revisa conexión/servidor).")
 
-            # Totales: placeholder hasta que tengas endpoint (p.ej. /cedulas/totales)
+            # Totales: placeholder (si luego expones /cedulas/totales lo integramos)
             c_totales_card.content = ft.Column([
                 ft.Text(f"Registros encontrados: {len(data)}", size=14, color=ft.Colors.BLACK),
             ])
