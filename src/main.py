@@ -330,7 +330,8 @@ def main(page: ft.Page):
         )
         c_btn_resumen = ft.ElevatedButton(
             "Resumen", width=150, height=40, icon=ft.Icons.INFO,
-            bgcolor=ft.Colors.AMBER, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
+            bgcolor=ft.Colors.AMBER, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE,
+            visible=False
         )
 
         c_btn_recibos = ft.ElevatedButton(
@@ -474,8 +475,8 @@ def main(page: ft.Page):
             c_btn_buscar.disabled = False
             c_btn_hasta.disabled = False
             c_btn_desde.disabled = False
-            c_btn_buscar.width = 150
-            c_btn_resumen.visible = True
+            c_btn_buscar.width = 300
+            c_btn_resumen.visible = False
             page.update()
 
         def c_mostrar_despliegue_totales():
