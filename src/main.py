@@ -2,6 +2,8 @@ import flet as ft
 from datetime import datetime, date
 import requests
 import pytz
+from urllib.parse import quote_plus
+
 
 API_URL = "https://api-telchac-production-45c8.up.railway.app/"
 
@@ -74,6 +76,11 @@ def main(page: ft.Page):
         bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
 
+    descargarpdf_btn = ft.ElevatedButton(
+        "Descargar PDF", width=150, height=40, icon=ft.Icons.DOWNLOAD,
+        bgcolor=ft.Colors.WHITE, color=ft.Colors.RED, icon_color=ft.Colors.RED
+    )
+
     # Diálogo de resumen:
     desplegar_dialog = ft.AlertDialog(title=ft.Text("Despliegue de Totales"))
 
@@ -98,6 +105,10 @@ def main(page: ft.Page):
         border_radius=ft.BorderRadius(0, 0, 20, 20)
     )
 
+    def fmt_api(iso_date_str: str) -> str:
+        # "YYYY-MM-DD" -> "YYMMDD"
+        d = datetime.fromisoformat(iso_date_str).date()
+        return d.strftime("%y%m%d")
     def show_snack(msg: str, icon=ft.Icons.INFO, bg=ft.Colors.BLUE_GREY_100):
         snack_bar = ft.SnackBar(
             content=ft.Row([ft.Icon(icon), ft.Text(msg)], tight=True, spacing=8),
@@ -113,6 +124,18 @@ def main(page: ft.Page):
             return datetime.strptime(f, "%y%m%d").strftime("%d-%m-%Y")
         except Exception:
             return f
+
+    def descargar_pdf_recibos(e):
+        desde = fmt_api(txt_fecha_desde.data)
+        hasta = fmt_api(txt_fecha_hasta.data)
+        nombre = (contribuyente_input.value or "").strip()
+        if nombre:
+            url = f"{API_URL}recibos/reporte?desde={desde}&hasta={hasta}&contribuyente={quote_plus(nombre)}"
+        else:
+            url = f"{API_URL}recibos/reporte?desde={desde}&hasta={hasta}"
+        page.launch_url(url)
+
+    descargarpdf_btn.on_click = descargar_pdf_recibos
 
     def cambiar_pagina(delta):
         nonlocal pagina_actual
@@ -197,32 +220,32 @@ def main(page: ft.Page):
             if response.status_code == 200:
                 data = response.json()
                 mostrar_resultados(data)
-                # Aviso si no hay resultados
-            if not data:
-                rango = f"{txt_fecha_desde.value} a {txt_fecha_hasta.value}"
-                criterio = f" para '{nombre}'" if nombre else ""
-                show_snack(f"No se encontraron recibos de {rango}{criterio}.", icon=ft.Icons.SEARCH_OFF, bg=ft.Colors.RED)
-                resultado_card.content = ft.Column(
-                    [ft.Container(
-                        content=ft.Row([ft.Icon(ft.Icons.SEARCH_OFF), ft.Text("Sin recibos en este rango.")]),
-                        padding=10,
-                        bgcolor=ft.Colors.GREY_100,
-                        border_radius=10,
-                    )],
-                    spacing=10, scroll=ft.ScrollMode.ALWAYS, height=200
-                )
+                if not data:
+                    rango = f"{txt_fecha_desde.value} a {txt_fecha_hasta.value}"
+                    criterio = f" para '{nombre}'" if nombre else ""
+                    show_snack(f"No se encontraron recibos de {rango}{criterio}.", icon=ft.Icons.SEARCH_OFF,
+                               bg=ft.Colors.RED)
+                    resultado_card.content = ft.Column(
+                        [ft.Container(
+                            content=ft.Row([ft.Icon(ft.Icons.SEARCH_OFF), ft.Text("Sin recibos en este rango.")]),
+                            padding=10,
+                            bgcolor=ft.Colors.GREY_100,
+                            border_radius=10,
+                        )],
+                        spacing=10, scroll=ft.ScrollMode.ALWAYS, height=200
+                    )
+                    page.update()
             else:
                 print("Error:", response.status_code, response.json().get("detail"))
         except Exception as e:
             print("Error al buscar recibos:", str(e))
-            #show_snack(f"Error {response.status_code} al consultar recibos.")
 
         try:
             response_totales = requests.get(f"{API_URL}recibos/totales", params=params)
             if response_totales.status_code == 200:
                 d = response_totales.json()
                 totales_card.content = ft.Column([
-                    ft.Text(f"Total Neto: ${float(d.get('total_neto', 0)):,.2f}", size=22, weight=ft.FontWeight.BOLD),
+                    ft.Row([ft.Text(f"Total Neto: ${float(d.get('total_neto', 0)):,.2f}", size=22, weight=ft.FontWeight.BOLD), descargarpdf_btn]),
                     ft.Text(f"Total Descuento: ${float(d.get('total_descuento', 0)):,.2f}", size=16, weight=ft.FontWeight.BOLD),
                     ft.Text(f"Recibos encontrados: {len(data)}", size=14, color=ft.Colors.BLACK),
                     ft.Text(f"Recibos cancelados: {d.get('cantidad_status_1', 0)}", size=14, color=ft.Colors.RED_700)
@@ -366,6 +389,11 @@ def main(page: ft.Page):
             on_click=lambda e: page.go("/")
         )
 
+        c_descargarpdf_btn = ft.ElevatedButton(
+            "Descargar PDF", width=150, height=40, icon=ft.Icons.DOWNLOAD,
+            bgcolor=ft.Colors.WHITE, color=ft.Colors.RED, icon_color=ft.Colors.RED
+        )
+
         c_dialog = ft.AlertDialog(title=ft.Text("Despliegue de Totales - Cédulas"))
 
         c_resultado_card = ft.Container(content=ft.Column([], scroll=ft.ScrollMode.AUTO, height=200), padding=10)
@@ -393,6 +421,18 @@ def main(page: ft.Page):
                 return datetime.strptime(f, "%y%m%d").strftime("%d-%m-%Y")
             except Exception:
                 return f
+
+        def c_descargar_pdf(e):
+            desde = c_fmt_api(c_txt_desde.data)
+            hasta = c_fmt_api(c_txt_hasta.data)
+            nombre = (c_contrib.value or "").strip()
+            if nombre:
+                url = f"{API_URL}cedulas/reporte?desde={desde}&hasta={hasta}&contribuyente={quote_plus(nombre)}"
+            else:
+                url = f"{API_URL}cedulas/reporte?desde={desde}&hasta={hasta}"
+            page.launch_url(url)
+
+        c_descargarpdf_btn.on_click = c_descargar_pdf
 
         def c_fmt_api(iso_date_str: str) -> str:
             """convierte 'YYYY-MM-DD' -> 'YYMMDD' (aammdd) para tu API"""
@@ -509,7 +549,7 @@ def main(page: ft.Page):
 
             # Totales: placeholder (si luego expones /cedulas/totales lo integramos)
             c_totales_card.content = ft.Column([
-                ft.Text(f"Cédulas encontradas: {len(data)}", size=14, color=ft.Colors.BLACK),
+                ft.Row([ft.Text(f"Cédulas encontradas: {len(data)}", size=14, color=ft.Colors.BLACK), c_descargarpdf_btn])
             ])
 
             # Restaurar UI
