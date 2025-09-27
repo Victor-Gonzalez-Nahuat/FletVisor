@@ -215,7 +215,7 @@ def main(page: ft.Page):
                 print("Error:", response.status_code, response.json().get("detail"))
         except Exception as e:
             print("Error al buscar recibos:", str(e))
-            show_snack(f"Error {response.status_code} al consultar recibos.")
+            #show_snack(f"Error {response.status_code} al consultar recibos.")
 
         try:
             response_totales = requests.get(f"{API_URL}recibos/totales", params=params)
