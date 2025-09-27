@@ -509,7 +509,7 @@ def main(page: ft.Page):
 
             # Totales: placeholder (si luego expones /cedulas/totales lo integramos)
             c_totales_card.content = ft.Column([
-                ft.Text(f"Registros encontrados: {len(data)}", size=14, color=ft.Colors.BLACK),
+                ft.Text(f"Cédulas encontradas: {len(data)}", size=14, color=ft.Colors.BLACK),
             ])
 
             # Restaurar UI
