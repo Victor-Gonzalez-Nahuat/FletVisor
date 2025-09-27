@@ -69,7 +69,6 @@ def main(page: ft.Page):
         bgcolor=ft.Colors.AMBER, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
     )
 
-    # Este botón hará el routing a /cedulas
     cedulas_btn = ft.ElevatedButton(
         "Cédulas", width=300, height=40, icon=ft.Icons.DOCK_SHARP,
         bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
@@ -276,8 +275,8 @@ def main(page: ft.Page):
         """
         Vista CÉDULAS:
         - Misma GUI que la principal.
-        - Lógica en ESQUELETO (no llama a API todavía).
-        - Cuando tengas tu backend, reemplaza los TODO con tus endpoints reales.
+        - Conectada a /cedulas?desde=YYMMDD&hasta=YYMMDD
+        - Tarjetas muestran: folio, motivo, fecham, contribuyente, direccion.
         """
         # --- Estado local de CÉDULAS ---
         c_todos = []
@@ -306,7 +305,6 @@ def main(page: ft.Page):
 
         c_dp_desde = ft.DatePicker(on_change=lambda e: c_actualizar_fecha(c_txt_desde, e.data), value=date.today())
         c_dp_hasta = ft.DatePicker(on_change=lambda e: c_actualizar_fecha(c_txt_hasta, e.data), value=date.today())
-        # Evitar duplicar overlays:
         if c_dp_desde not in page.overlay:
             page.overlay.append(c_dp_desde)
         if c_dp_hasta not in page.overlay:
@@ -335,7 +333,6 @@ def main(page: ft.Page):
             bgcolor=ft.Colors.AMBER, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE
         )
 
-        # Botón para ir a Recibos
         c_btn_recibos = ft.ElevatedButton(
             "Ir a Recibos", width=300, height=40, icon=ft.Icons.DESCRIPTION,
             bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, icon_color=ft.Colors.WHITE,
@@ -359,16 +356,21 @@ def main(page: ft.Page):
                 c_contrib
             ]),
             padding=20,
-            bgcolor=ft.Colors.BLUE,
+            bgcolor=ft.Colors.BLUE,  # para distinguir Cédulas
             border_radius=ft.BorderRadius(0, 0, 20, 20)
         )
 
-        # --- ESQUELETO DE LÓGICA (CÉDULAS) ---
+        # --- Utilidades / Lógica (CÉDULAS) ---
         def c_formatear_fecha_yymmdd(f):
             try:
                 return datetime.strptime(f, "%y%m%d").strftime("%d-%m-%Y")
             except Exception:
                 return f
+
+        def c_fmt_api(iso_date_str: str) -> str:
+            """convierte 'YYYY-MM-DD' -> 'YYMMDD' (aammdd) para tu API"""
+            d = datetime.fromisoformat(iso_date_str).date()
+            return d.strftime("%y%m%d")
 
         def c_mostrar_pagina():
             nonlocal c_pagina, c_page_size, c_todos
@@ -378,21 +380,21 @@ def main(page: ft.Page):
 
             widgets = []
             for r in fragmento:
-                # Estructura provisional; ajusta keys cuando tengas la API de cédulas (folio, concepto_cedula, etc.)
-                es_cancelado = r.get("status", r.get("id_status", "0")) == "1"
-                color_texto = ft.Colors.GREY if es_cancelado else ft.Colors.BLACK
-                estado = "❌ CANCELADO" if es_cancelado else ""
+                # Campos según tu API: folio, motivo, fecham, contribuyente, direccion
+                folio = r.get("folio", "")
+                motivo = r.get("motivo", "")
+                fecham = r.get("fecham", "")
+                contrib = r.get("contribuyente", "")
+                direccion = r.get("direccion") or ""  # puede venir None
+
                 tarjeta = ft.Card(
                     content=ft.Container(
                         content=ft.Column([
-                            ft.Text(f"Cédula: {r.get('folio', r.get('recibo',''))} {estado}",
-                                    weight=ft.FontWeight.BOLD, size=18, color=color_texto),
-                            ft.Text(f"Contribuyente: {r.get('contribuyente','')}", color=color_texto),
-                            ft.Text(f"Concepto: {r.get('concepto','')}", color=color_texto),
-                            ft.Text(f"Fecha: {c_formatear_fecha_yymmdd(r.get('fecha',''))}", color=color_texto),
-                            ft.Text(f"Importe: ${float(r.get('neto',0)):,.2f}", weight=ft.FontWeight.BOLD,
-                                    color=ft.Colors.GREEN_800 if not es_cancelado else ft.Colors.GREY),
-                            ft.Text(f"Descuento: ${float(r.get('descuento',0)):,.2f}", color=color_texto)
+                            ft.Text(f"Cédula: {folio}", weight=ft.FontWeight.BOLD, size=18),
+                            ft.Text(f"Motivo: {motivo}"),
+                            ft.Text(f"Contribuyente: {contrib}"),
+                            ft.Text(f"Dirección: {direccion}", selectable=True),
+                            ft.Text(f"Fecha: {c_formatear_fecha_yymmdd(fecham)}"),
                         ]),
                         padding=15,
                         bgcolor=ft.Colors.WHITE,
@@ -427,7 +429,7 @@ def main(page: ft.Page):
             c_mostrar_pagina()
 
         def c_buscar(nombre_raw: str):
-            # ESQUELETO: No llama API. Deja todo listo para cuando programes endpoints.
+            # Activa loader / desactiva botones
             c_btn_buscar.disabled = True
             c_loader.visible = True
             c_btn_desde.disabled = True
@@ -436,24 +438,38 @@ def main(page: ft.Page):
             c_btn_buscar.width = 300
             page.update()
 
-            # TODO: cuando exista tu API de cédulas:
-            # - construir params con fechas y contribuyente
-            # - requests.get(f"{API_URL}cedulas" o "cedulas/filtrar", params=params)
-            # - c_mostrar_resultados(response.json())
+            # Params con formato aammdd
+            desde = c_fmt_api(c_txt_desde.data)  # YYMMDD
+            hasta = c_fmt_api(c_txt_hasta.data)  # YYMMDD
+            params = {"desde": desde, "hasta": hasta}
 
-            # Por ahora, limpiamos resultados y mostramos aviso
-            c_mostrar_resultados([])
-            page.snack_bar = ft.SnackBar(ft.Text("Búsqueda de cédulas pendiente de implementar (API)."))
-            page.snack_bar.open = True
+            # Si luego soportas filtro por contribuyente en /cedulas, lo dejamos preparado:
+            nombre = (nombre_raw or "").strip()
+            if nombre:
+                params["contribuyente"] = nombre
 
-            # Placeholder de totales
+            data = []
+            try:
+                url = f"{API_URL}cedulas"
+                response = requests.get(url, params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    c_mostrar_resultados(data)
+                else:
+                    print("Error:", response.status_code, getattr(response, "text", ""))
+                    page.snack_bar = ft.SnackBar(ft.Text(f"Error {response.status_code} al consultar cédulas."))
+                    page.snack_bar.open = True
+            except Exception as e:
+                print("Error al buscar cédulas:", str(e))
+                page.snack_bar = ft.SnackBar(ft.Text("No se pudo consultar cédulas (revisa conexión/servidor)."))
+                page.snack_bar.open = True
+
+            # Totales: placeholder hasta que tengas endpoint (p.ej. /cedulas/totales)
             c_totales_card.content = ft.Column([
-                ft.Text("Total Neto: $0.00", size=22, weight=ft.FontWeight.BOLD),
-                ft.Text("Total Descuento: $0.00", size=16, weight=ft.FontWeight.BOLD),
-                ft.Text("Registros encontrados: 0", size=14, color=ft.Colors.BLACK),
-                ft.Text("Cancelados: 0", size=14, color=ft.Colors.RED_700),
+                ft.Text(f"Registros encontrados: {len(data)}", size=14, color=ft.Colors.BLACK),
             ])
 
+            # Restaurar UI
             c_loader.visible = False
             c_btn_buscar.disabled = False
             c_btn_hasta.disabled = False
@@ -463,7 +479,7 @@ def main(page: ft.Page):
             page.update()
 
         def c_mostrar_despliegue_totales():
-            # ESQUELETO: sin llamada a API aún
+            # ESQUELETO: agrega tu llamada cuando exista /cedulas/totales (o similar)
             c_dialog.content = ft.Text("Despliegue de totales de cédulas (pendiente de API).")
             page.open(c_dialog)
 
@@ -471,7 +487,7 @@ def main(page: ft.Page):
         c_btn_buscar.on_click = lambda e: c_buscar(c_contrib.value)
         c_btn_resumen.on_click = lambda e: c_mostrar_despliegue_totales()
 
-        # AppBar y armado de vista
+        # Armar vista
         view = ft.View(
             route="/cedulas",
             controls=[
@@ -484,7 +500,6 @@ def main(page: ft.Page):
         # Carga inicial vacía
         c_mostrar_resultados([])
         return view
-
     def route_change(e: ft.RouteChangeEvent | None):
         # Redibuja las views según la ruta actual
         page.views.clear()
